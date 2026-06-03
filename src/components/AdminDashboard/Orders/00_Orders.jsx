@@ -24,6 +24,7 @@ const groupOrdersByOrderId = (orders) =>
           transferDate: item.transferDate || "",
           transferTime: item.transferTime || "",
           transferAmount: item.transferAmount || 0,
+          proofImageBase64: item.proofImageBase64 || "",
           items: [],
           totalAmount: 0,
           totalQuantity: 0,

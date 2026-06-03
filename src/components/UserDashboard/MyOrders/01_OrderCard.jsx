@@ -24,16 +24,18 @@ const formatDate = (value) =>
     year: "numeric",
   });
 
-const formatAmount = (value) => `฿${Number(value || 0).toLocaleString("en-US")}`;
+const formatAmount = (value) =>
+  `฿${Number(value || 0).toLocaleString("en-US")}`;
+
+const MAX_SLIP_FILE_SIZE = 1024 * 1024;
 
 const OrderCard = ({ order, onSubmitPaymentProof }) => {
   const [expanded, setExpanded] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [transferDate, setTransferDate] = useState(order.transferDate || "");
-  const [transferTime, setTransferTime] = useState(order.transferTime || "");
-  const [transferAmount, setTransferAmount] = useState(
-    order.transferAmount || order.totalAmount || "",
+  const [proofImageBase64, setProofImageBase64] = useState(
+    order.proofImageBase64 || "",
   );
+  const [selectedFileName, setSelectedFileName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitMessageType, setSubmitMessageType] = useState("success");
@@ -44,22 +46,60 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
   const paymentStatusClass =
     paymentStatusClasses[order.paymentProofStatus] || "bg-gray-100 text-gray-500";
 
+  const handleSlipChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setSubmitMessage("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
+      setSubmitMessageType("error");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_SLIP_FILE_SIZE) {
+      setSubmitMessage("ไฟล์รูปต้องมีขนาดไม่เกิน 1MB");
+      setSubmitMessageType("error");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProofImageBase64(String(reader.result || ""));
+      setSelectedFileName(file.name);
+      setSubmitMessage("");
+    };
+    reader.onerror = () => {
+      setSubmitMessage("ไม่สามารถอ่านไฟล์รูปได้");
+      setSubmitMessageType("error");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmitPayment = async () => {
+    if (!proofImageBase64) {
+      setSubmitMessage("กรุณาอัปโหลดรูปสลิปก่อนส่งข้อมูล");
+      setSubmitMessageType("error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setSubmitMessage("");
 
       await onSubmitPaymentProof(order.orderId, {
-        transferDate,
-        transferTime,
-        transferAmount: Number(transferAmount),
+        proofImageBase64,
       });
 
-      setSubmitMessage("ส่งข้อมูลการโอนเงินเรียบร้อยแล้ว");
+      setSubmitMessage("ส่งรูปสลิปการโอนเงินเรียบร้อยแล้ว");
       setSubmitMessageType("success");
       setShowPaymentForm(false);
     } catch (error) {
-      setSubmitMessage(error.message || "ไม่สามารถส่งข้อมูลการโอนเงินได้");
+      setSubmitMessage(error.message || "ไม่สามารถส่งรูปสลิปการโอนเงินได้");
       setSubmitMessageType("error");
     } finally {
       setSubmitting(false);
@@ -128,26 +168,14 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
               </span>
             </div>
 
-            {order.paymentProofStatus && order.paymentProofStatus !== "rejected" && (
-              <div className="space-y-1 text-sm text-gray-500">
-                <p>
-                  วันที่โอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {order.transferDate || "-"}
-                  </span>
-                </p>
-                <p>
-                  เวลาโอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {order.transferTime || "-"}
-                  </span>
-                </p>
-                <p>
-                  ยอดเงินที่โอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {formatAmount(order.transferAmount)}
-                  </span>
-                </p>
+            {order.proofImageBase64 && order.paymentProofStatus !== "rejected" && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">สลิปที่ส่งล่าสุด</p>
+                <img
+                  src={order.proofImageBase64}
+                  alt="Payment slip"
+                  className="h-40 w-full max-w-xs rounded-2xl border border-gray-100 bg-white object-cover"
+                />
               </div>
             )}
           </div>
@@ -162,47 +190,33 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
                 className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
               >
                 {order.paymentProofStatus === "rejected"
-                  ? "ส่งข้อมูลการโอนใหม่"
-                  : "แจ้งการโอนเงิน"}
+                  ? "ส่งรูปสลิปใหม่"
+                  : "อัปโหลดสลิปการโอนเงิน"}
               </button>
             ) : (
               <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <label className="space-y-2 text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">วันที่โอน</span>
-                    <input
-                      type="date"
-                      value={transferDate}
-                      onChange={(event) => setTransferDate(event.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
-                    />
-                  </label>
+                <label className="block space-y-2 text-sm text-gray-600">
+                  <span className="font-medium text-gray-800">รูปสลิปการโอนเงิน</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleSlipChange}
+                    className="block w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-violet-700"
+                  />
+                </label>
 
-                  <label className="space-y-2 text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">เวลาโอน</span>
-                    <input
-                      type="time"
-                      value={transferTime}
-                      onChange={(event) => setTransferTime(event.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
-                    />
-                  </label>
+                <p className="text-xs text-gray-400">
+                  รองรับไฟล์รูปไม่เกิน 1MB
+                  {selectedFileName ? ` • ${selectedFileName}` : ""}
+                </p>
 
-                  <label className="space-y-2 text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">
-                      ยอดเงินที่โอน
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={transferAmount}
-                      onChange={(event) => setTransferAmount(event.target.value)}
-                      placeholder="เช่น 850"
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
-                    />
-                  </label>
-                </div>
+                {proofImageBase64 ? (
+                  <img
+                    src={proofImageBase64}
+                    alt="Slip preview"
+                    className="h-48 w-full max-w-sm rounded-2xl border border-gray-100 bg-white object-cover"
+                  />
+                ) : null}
 
                 <div className="flex flex-wrap items-center gap-3">
                   <button
@@ -211,7 +225,7 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
                     disabled={submitting}
                     className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {submitting ? "กำลังส่งข้อมูล..." : "ส่งข้อมูลการโอน"}
+                    {submitting ? "กำลังส่งข้อมูล..." : "ส่งรูปสลิป"}
                   </button>
                   <button
                     type="button"
@@ -229,7 +243,7 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
 
         {isPrimary && hasSubmittedProof && (
           <p className="mt-4 text-sm text-sky-700">
-            ส่งข้อมูลการโอนแล้ว กำลังรอ admin ตรวจ
+            ส่งรูปสลิปแล้ว กำลังรอ admin ตรวจ
           </p>
         )}
 

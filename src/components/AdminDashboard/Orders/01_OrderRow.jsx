@@ -289,29 +289,17 @@ const OrderRow = ({ order, onRefresh }) => {
               </span>
             </div>
 
-            {order.paymentProofStatus && order.paymentProofStatus !== "none" ? (
-              <div className="space-y-1">
-                <p>
-                  วันที่โอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {order.transferDate || "-"}
-                  </span>
-                </p>
-                <p>
-                  เวลาโอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {order.transferTime || "-"}
-                  </span>
-                </p>
-                <p>
-                  ยอดเงินที่โอน:{" "}
-                  <span className="font-medium text-gray-800">
-                    {formatAmount(order.transferAmount)}
-                  </span>
-                </p>
+            {order.proofImageBase64 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">สลิปการโอนเงิน</p>
+                <img
+                  src={order.proofImageBase64}
+                  alt="Payment slip"
+                  className="h-40 w-full rounded-2xl border border-gray-100 bg-white object-cover"
+                />
               </div>
             ) : (
-              <p className="text-sm text-gray-400">ยังไม่มีข้อมูลการโอนจากผู้ใช้</p>
+              <p className="text-sm text-gray-400">ยังไม่มีรูปสลิปจากผู้ใช้</p>
             )}
           </div>
         </td>
