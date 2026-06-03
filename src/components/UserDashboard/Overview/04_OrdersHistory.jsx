@@ -1,3 +1,6 @@
+const fallbackProductImage =
+  "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png";
+
 const OrdersHistory = ({ orders, onOpenOrders }) => {
   const historyOrders = orders.slice(0, 3);
 
@@ -5,9 +8,7 @@ const OrdersHistory = ({ orders, onOpenOrders }) => {
     <div>
       <div className="mb-5">
         <h3 className="text-xl font-bold text-gray-900">Orders history</h3>
-        <p className="mt-1 text-sm text-gray-400">
-          ดูคำสั่งซื้อที่สำเร็จแล้ว
-        </p>
+        <p className="mt-1 text-sm text-gray-400">ดูคำสั่งซื้อที่สำเร็จแล้ว</p>
       </div>
 
       <div className="overflow-hidden rounded-2xl bg-white pb-4">
@@ -32,17 +33,11 @@ const OrdersHistory = ({ orders, onOpenOrders }) => {
                   >
                     <td className="py-4 pl-4 md:pl-8">
                       <div className="flex items-center gap-3">
-                        {order.image ? (
-                          <img
-                            src={order.image}
-                            alt={order.name}
-                            className="h-12 w-12 rounded-2xl object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-sm font-semibold text-gray-500">
-                            {order.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <img
+                          src={order.images?.[0] || fallbackProductImage}
+                          alt={order.name}
+                          className="h-12 w-12 rounded-2xl object-cover"
+                        />
                         <div>
                           <span className="text-sm font-medium text-gray-800">
                             {order.name}

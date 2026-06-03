@@ -13,6 +13,8 @@ const groupOrdersByOrderId = (orders) =>
           orderId: item.orderId,
           status: item.status,
           statusLabel: item.statusLabel,
+          displayStatus: item.displayStatus,
+          displayStatusLabel: item.displayStatusLabel,
           createdAt: item.createdAt,
           customer: item.customer,
           courier: item.courier || "",
@@ -34,11 +36,12 @@ const groupOrdersByOrderId = (orders) =>
 
       return acc;
     }, {}),
-  ).map((group) => ({
-    ...group,
-    primaryItem: group.items[0],
-    extraItems: group.items.slice(1),
-  }))
+  )
+    .map((group) => ({
+      ...group,
+      primaryItem: group.items[0],
+      extraItems: group.items.slice(1),
+    }))
     .filter((group) => group.primaryItem);
 
 const Orders = ({ summary, orders, loading, error, onRefresh }) => {

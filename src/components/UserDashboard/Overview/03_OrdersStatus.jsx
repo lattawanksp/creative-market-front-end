@@ -1,6 +1,11 @@
+const fallbackProductImage =
+  "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png";
+
 const statusClasses = {
-  pending: "bg-amber-100 text-amber-600",
-  paid: "bg-emerald-100 text-emerald-600",
+  pending: "bg-gray-100 text-gray-600",
+  "awaiting-proof": "bg-amber-100 text-amber-700",
+  "awaiting-review": "bg-sky-100 text-sky-700",
+  confirmed: "bg-emerald-100 text-emerald-600",
   cancelled: "bg-rose-100 text-rose-600",
 };
 
@@ -39,17 +44,11 @@ const OrdersStatus = ({ orders, onOpenOrders }) => {
                   >
                     <td className="py-4 pl-4 md:pl-8">
                       <div className="flex items-center gap-3">
-                        {order.image ? (
-                          <img
-                            src={order.image}
-                            alt={order.name}
-                            className="h-12 w-12 rounded-2xl object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-sm font-semibold text-gray-500">
-                            {order.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <img
+                          src={order.images?.[0] || fallbackProductImage}
+                          alt={order.name}
+                          className="h-12 w-12 rounded-2xl object-cover"
+                        />
                         <div>
                           <span className="text-sm font-medium text-gray-800">
                             {order.name}
@@ -63,9 +62,9 @@ const OrdersStatus = ({ orders, onOpenOrders }) => {
                     </td>
                     <td className="py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[order.status]}`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[order.displayStatus]}`}
                       >
-                        {order.statusLabel}
+                        {order.displayStatusLabel}
                       </span>
                     </td>
                     <td className="py-4 pr-4 text-right text-sm font-semibold text-gray-900 md:pr-8">

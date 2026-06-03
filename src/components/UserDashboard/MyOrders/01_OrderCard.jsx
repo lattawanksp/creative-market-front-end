@@ -1,8 +1,13 @@
 import { useState } from "react";
 
+const fallbackProductImage =
+  "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png";
+
 const statusClasses = {
-  paid: "bg-emerald-100 text-emerald-600",
-  pending: "bg-amber-100 text-amber-600",
+  pending: "bg-gray-100 text-gray-600",
+  "awaiting-proof": "bg-amber-100 text-amber-700",
+  "awaiting-review": "bg-sky-100 text-sky-700",
+  confirmed: "bg-emerald-100 text-emerald-600",
   cancelled: "bg-rose-100 text-rose-600",
 };
 
@@ -19,8 +24,7 @@ const formatDate = (value) =>
     year: "numeric",
   });
 
-const formatAmount = (value) =>
-  `฿${Number(value || 0).toLocaleString("en-US")}`;
+const formatAmount = (value) => `฿${Number(value || 0).toLocaleString("en-US")}`;
 
 const OrderCard = ({ order, onSubmitPaymentProof }) => {
   const [expanded, setExpanded] = useState(false);
@@ -35,12 +39,8 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
   const [submitMessageType, setSubmitMessageType] = useState("success");
 
   const primaryItem = order.primaryItem;
-  const canSubmitPayment =
-    order.status === "pending" &&
-    (!order.paymentProofStatus ||
-      order.paymentProofStatus === "none" ||
-      order.paymentProofStatus === "rejected");
-  const hasSubmittedProof = order.paymentProofStatus === "submitted";
+  const canSubmitPayment = order.displayStatus === "awaiting-proof";
+  const hasSubmittedProof = order.displayStatus === "awaiting-review";
   const paymentStatusClass =
     paymentStatusClasses[order.paymentProofStatus] || "bg-gray-100 text-gray-500";
 
@@ -75,17 +75,11 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
           : "py-4 md:flex-row md:items-center md:gap-6"
       }`}
     >
-      {item.image ? (
-        <img
-          src={item.image}
-          alt={item.name}
-          className="h-20 w-20 shrink-0 rounded-2xl bg-gray-100 object-cover shadow-sm md:h-24 md:w-24"
-        />
-      ) : (
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-2xl font-bold text-gray-500 shadow-sm md:h-24 md:w-24">
-          {item.name.charAt(0).toUpperCase()}
-        </div>
-      )}
+      <img
+        src={item.images?.[0] || fallbackProductImage}
+        alt={item.name}
+        className="h-20 w-20 shrink-0 rounded-2xl bg-gray-100 object-cover shadow-sm md:h-24 md:w-24"
+      />
 
       <div className="min-w-0 flex-1">
         <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
@@ -155,12 +149,6 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
                   </span>
                 </p>
               </div>
-            )}
-
-            {order.paymentProofStatus === "rejected" && (
-              <p className="text-sm text-rose-500">
-                ข้อมูลการโอนไม่ผ่าน กรุณาส่งข้อมูลใหม่อีกครั้ง
-              </p>
             )}
           </div>
         )}
@@ -241,7 +229,7 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
 
         {isPrimary && hasSubmittedProof && (
           <p className="mt-4 text-sm text-sky-700">
-            ส่งข้อมูลการโอนแล้ว กำลังรอแอดมินตรวจสอบ
+            ส่งข้อมูลการโอนแล้ว กำลังรอ admin ตรวจ
           </p>
         )}
 
@@ -305,10 +293,10 @@ const OrderCard = ({ order, onSubmitPaymentProof }) => {
           </p>
           <span
             className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-              statusClasses[order.status]
+              statusClasses[order.displayStatus]
             } ${isPrimary ? "" : "invisible"}`}
           >
-            {order.statusLabel}
+            {order.displayStatusLabel}
           </span>
         </div>
       </div>

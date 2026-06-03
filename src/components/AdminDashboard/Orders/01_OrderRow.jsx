@@ -1,10 +1,14 @@
 import { Fragment, useState } from "react";
 
 const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
+const fallbackProductImage =
+  "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png";
 
 const statusClasses = {
-  paid: "bg-emerald-50 text-emerald-600",
-  pending: "bg-amber-50 text-amber-600",
+  pending: "bg-gray-100 text-gray-600",
+  "awaiting-proof": "bg-amber-100 text-amber-700",
+  "awaiting-review": "bg-sky-100 text-sky-700",
+  confirmed: "bg-emerald-50 text-emerald-600",
   cancelled: "bg-rose-50 text-rose-600",
 };
 
@@ -32,12 +36,16 @@ const OrderRow = ({ order, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [courier, setCourier] = useState(order.courier || "");
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || "");
+  const [isEditingShipping, setIsEditingShipping] = useState(
+    !order.courier && !order.trackingNumber,
+  );
   const [savingShipping, setSavingShipping] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
 
   const primaryItem = order.primaryItem;
+  const isCancelled = order.status === "cancelled";
   const paymentStatusClass =
     paymentStatusClasses[order.paymentProofStatus || "none"] ||
     paymentStatusClasses.none;
@@ -74,6 +82,7 @@ const OrderRow = ({ order, onRefresh }) => {
 
       setCourier(result.data?.courier || "");
       setTrackingNumber(result.data?.trackingNumber || "");
+      setIsEditingShipping(false);
       setMessage("บันทึกข้อมูลขนส่งแล้ว");
       setMessageType("success");
       await onRefresh?.();
@@ -83,6 +92,18 @@ const OrderRow = ({ order, onRefresh }) => {
     } finally {
       setSavingShipping(false);
     }
+  };
+
+  const handleEditShipping = () => {
+    setMessage("");
+    setIsEditingShipping(true);
+  };
+
+  const handleCancelEdit = () => {
+    setCourier(order.courier || "");
+    setTrackingNumber(order.trackingNumber || "");
+    setMessage("");
+    setIsEditingShipping(false);
   };
 
   const handleReviewPayment = async (action) => {
@@ -128,17 +149,11 @@ const OrderRow = ({ order, onRefresh }) => {
       <tr className="align-top transition-colors hover:bg-gray-50/50">
         <td className="px-4 py-4 md:px-6">
           <div className="flex items-start gap-3">
-            {primaryItem.image ? (
-              <img
-                src={primaryItem.image}
-                alt={primaryItem.name}
-                className="h-10 w-10 rounded-xl bg-gray-100 object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500">
-                {primaryItem.name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <img
+              src={primaryItem.images?.[0] || fallbackProductImage}
+              alt={primaryItem.name}
+              className="h-10 w-10 rounded-xl bg-gray-100 object-cover"
+            />
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-800">{primaryItem.name}</p>
               <p className="mt-1 text-xs text-gray-500">by {primaryItem.artist}</p>
@@ -172,45 +187,96 @@ const OrderRow = ({ order, onRefresh }) => {
         </td>
         <td className="px-4 py-4">
           <span
-            className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold tracking-wide ${statusClasses[order.status]}`}
+            className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold tracking-wide ${statusClasses[order.displayStatus]}`}
           >
-            {order.statusLabel}
+            {order.displayStatusLabel}
           </span>
         </td>
         <td className="px-4 py-4">
           <div className="min-w-[170px] space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p
+              className={`text-[10px] uppercase tracking-[0.2em] text-gray-400 ${
+                isCancelled ? "invisible" : ""
+              }`}
+            >
               Courier
             </p>
-            <input
-              type="text"
-              value={courier}
-              onChange={(event) => setCourier(event.target.value)}
-              placeholder="เช่น Kerry Express"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
-            />
+            {isCancelled ? (
+              <div className="px-3 py-2">
+                <span className="invisible text-sm">placeholder</span>
+              </div>
+            ) : isEditingShipping ? (
+              <input
+                type="text"
+                value={courier}
+                onChange={(event) => setCourier(event.target.value)}
+                placeholder="เช่น Kerry Express"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
+              />
+            ) : (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                {courier || "-"}
+              </div>
+            )}
           </div>
         </td>
         <td className="px-4 py-4">
           <div className="min-w-[220px] space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
+            <p
+              className={`text-[10px] uppercase tracking-[0.2em] text-gray-400 ${
+                isCancelled ? "invisible" : ""
+              }`}
+            >
               Tracking Number
             </p>
-            <input
-              type="text"
-              value={trackingNumber}
-              onChange={(event) => setTrackingNumber(event.target.value)}
-              placeholder="กรอกเลขพัสดุ"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
-            />
-            <button
-              type="button"
-              onClick={handleSaveShipping}
-              disabled={savingShipping}
-              className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {savingShipping ? "กำลังบันทึก..." : "บันทึก"}
-            </button>
+            {isCancelled ? (
+              <div className="px-3 py-2">
+                <span className="invisible text-sm">placeholder</span>
+              </div>
+            ) : isEditingShipping ? (
+              <>
+                <input
+                  type="text"
+                  value={trackingNumber}
+                  onChange={(event) => setTrackingNumber(event.target.value)}
+                  placeholder="กรอกเลขพัสดุ"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-violet-300"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveShipping}
+                    disabled={savingShipping}
+                    className="px-0 py-0 text-xs font-semibold text-violet-700 transition hover:text-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {savingShipping ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                  {(order.courier || order.trackingNumber) && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={savingShipping}
+                      className="px-0 py-0 text-xs font-semibold text-gray-500 transition hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      ยกเลิก
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  {trackingNumber || "-"}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEditShipping}
+                  className="px-0 py-0 text-xs font-semibold text-violet-700 transition hover:text-violet-800"
+                >
+                  แก้ไข
+                </button>
+              </>
+            )}
           </div>
         </td>
         <td className="px-4 py-4">
@@ -273,7 +339,7 @@ const OrderRow = ({ order, onRefresh }) => {
             ) : (
               <p className="text-sm text-gray-400">
                 {order.paymentProofStatus === "approved"
-                  ? "ตรวจสอบแล้ว"
+                  ? "ยืนยันแล้ว"
                   : order.paymentProofStatus === "rejected"
                     ? "รอผู้ใช้ส่งข้อมูลใหม่"
                     : "ยังไม่มีรายการให้ตรวจ"}
@@ -306,17 +372,11 @@ const OrderRow = ({ order, onRefresh }) => {
                   key={item.id}
                   className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-3"
                 >
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-12 w-12 rounded-xl bg-gray-100 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500">
-                      {item.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <img
+                    src={item.images?.[0] || fallbackProductImage}
+                    alt={item.name}
+                    className="h-12 w-12 rounded-xl bg-gray-100 object-cover"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-800">{item.name}</p>

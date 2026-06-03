@@ -6,7 +6,9 @@ const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
 const tabs = [
   { label: "All", value: "All" },
   { label: "รอดำเนินการ", value: "pending" },
-  { label: "สำเร็จแล้ว", value: "paid" },
+  { label: "รอกรอกหลักฐาน", value: "awaiting-proof" },
+  { label: "รอ admin ตรวจ", value: "awaiting-review" },
+  { label: "confirmed", value: "confirmed" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
 
@@ -27,6 +29,8 @@ const groupOrdersByOrderId = (orders) =>
           orderId: item.orderId,
           status: item.status,
           statusLabel: item.statusLabel,
+          displayStatus: item.displayStatus,
+          displayStatusLabel: item.displayStatusLabel,
           createdAt: item.createdAt,
           courier: item.courier || "",
           trackingNumber: item.trackingNumber || "",
@@ -85,7 +89,7 @@ const MyOrders = ({ orders, summary, loading, error, onRefresh }) => {
   const filteredOrders =
     activeTab === "All"
       ? groupedOrders
-      : groupedOrders.filter((order) => order.status === activeTab);
+      : groupedOrders.filter((order) => order.displayStatus === activeTab);
 
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   const paginatedOrders = filteredOrders.slice(

@@ -60,6 +60,10 @@ const SalesChart = ({ chartData }) => {
             />
             <Tooltip
               cursor={{ stroke: "#c7d2fe", strokeWidth: 1 }}
+              labelFormatter={(_, payload) => {
+                const point = payload?.[0]?.payload;
+                return point?.fullDate || point?.label || "";
+              }}
               formatter={(value) => [
                 `THB ${Number(value).toLocaleString("en-US", {
                   minimumFractionDigits: 2,

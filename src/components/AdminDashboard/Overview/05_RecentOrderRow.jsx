@@ -1,6 +1,11 @@
+const fallbackProductImage =
+  "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png";
+
 const statusClasses = {
-  paid: "bg-emerald-50 text-emerald-600",
-  pending: "bg-amber-50 text-amber-600",
+  pending: "bg-gray-100 text-gray-600",
+  "awaiting-proof": "bg-amber-100 text-amber-700",
+  "awaiting-review": "bg-sky-100 text-sky-700",
+  confirmed: "bg-emerald-50 text-emerald-600",
   cancelled: "bg-rose-50 text-rose-600",
 };
 
@@ -22,17 +27,11 @@ const RecentOrderRow = ({ order }) => {
     <tr className="align-top transition-colors hover:bg-gray-50/50">
       <td className="px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
-          {order.image ? (
-            <img
-              src={order.image}
-              alt={order.name}
-              className="h-10 w-10 rounded-xl bg-gray-100 object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500">
-              {order.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <img
+            src={order.images?.[0] || fallbackProductImage}
+            alt={order.name}
+            className="h-10 w-10 rounded-xl bg-gray-100 object-cover"
+          />
           <div>
             <p className="text-sm font-medium text-gray-800">{order.name}</p>
             <p className="mt-1 text-xs text-gray-500">by {order.artist}</p>
@@ -49,9 +48,9 @@ const RecentOrderRow = ({ order }) => {
       </td>
       <td className="px-4 py-4">
         <span
-          className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold tracking-wide ${statusClasses[order.status]}`}
+          className={`inline-block rounded-full px-3 py-1 text-[10px] font-bold tracking-wide ${statusClasses[order.displayStatus]}`}
         >
-          {order.statusLabel}
+          {order.displayStatusLabel}
         </span>
       </td>
     </tr>
