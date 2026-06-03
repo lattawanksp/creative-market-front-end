@@ -34,6 +34,7 @@ const formatAmount = (value) =>
 
 const OrderRow = ({ order, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showSlipModal, setShowSlipModal] = useState(false);
   const [courier, setCourier] = useState(order.courier || "");
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || "");
   const [isEditingShipping, setIsEditingShipping] = useState(
@@ -290,14 +291,13 @@ const OrderRow = ({ order, onRefresh }) => {
             </div>
 
             {order.proofImageBase64 ? (
-              <div className="space-y-2">
-                <p className="text-sm text-gray-500">สลิปการโอนเงิน</p>
-                <img
-                  src={order.proofImageBase64}
-                  alt="Payment slip"
-                  className="h-40 w-full rounded-2xl border border-gray-100 bg-white object-cover"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowSlipModal(true)}
+                className="text-xs font-semibold text-violet-600 transition hover:text-violet-700"
+              >
+                ดูสลิป
+              </button>
             ) : (
               <p className="text-sm text-gray-400">ยังไม่มีรูปสลิปจากผู้ใช้</p>
             )}
@@ -388,6 +388,28 @@ const OrderRow = ({ order, onRefresh }) => {
           </td>
         </tr>
       )}
+      {showSlipModal && order.proofImageBase64 ? (
+        <tr>
+          <td colSpan={10}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+              <div className="relative w-full max-w-3xl rounded-3xl bg-white p-4 shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => setShowSlipModal(false)}
+                  className="absolute right-4 top-4 text-sm font-semibold text-gray-500 transition hover:text-gray-700"
+                >
+                  ปิด
+                </button>
+                <img
+                  src={order.proofImageBase64}
+                  alt="Payment slip"
+                  className="max-h-[80vh] w-full rounded-2xl object-contain"
+                />
+              </div>
+            </div>
+          </td>
+        </tr>
+      ) : null}
     </Fragment>
   );
 };

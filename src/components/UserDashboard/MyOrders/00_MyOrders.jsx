@@ -4,11 +4,11 @@ import OrderCard from "./01_OrderCard";
 const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
 
 const tabs = [
-  { label: "All", value: "All" },
-  { label: "รอดำเนินการ", value: "pending" },
-  { label: "รอกรอกหลักฐาน", value: "awaiting-proof" },
-  { label: "รอ admin ตรวจ", value: "awaiting-review" },
-  { label: "confirmed", value: "confirmed" },
+  { label: "ทั้งหมด", value: "All" },
+  { label: "รอชำระเงิน", value: "pending" },
+  { label: "รอแนบสลิป", value: "awaiting-proof" },
+  { label: "รอตรวจสอบ", value: "awaiting-review" },
+  { label: "สำเร็จแล้ว", value: "confirmed" },
   { label: "ยกเลิก", value: "cancelled" },
 ];
 

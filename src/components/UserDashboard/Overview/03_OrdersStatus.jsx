@@ -10,7 +10,13 @@ const statusClasses = {
 };
 
 const OrdersStatus = ({ orders, onOpenOrders }) => {
-  const recentOrders = orders.slice(0, 3);
+  const recentOrders = orders
+    .filter(
+      (order) =>
+        order.displayStatus !== "confirmed" &&
+        order.displayStatus !== "cancelled",
+    )
+    .slice(0, 6);
 
   return (
     <div>

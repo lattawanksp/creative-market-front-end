@@ -13,29 +13,34 @@ export default function Cart() {
   const { updateQuantity, removeItem } = useCartActions();
 
   const handleUpdateQuantity = async (id, amount) => {
-    const item = cartItems.find((item) => item.productId === id || item._id === id || item.id === id);
+    const item = cartItems.find(
+      (item) => item.productId === id || item._id === id || item.id === id,
+    );
     if (!item) return;
-    
+
     // API_PLAN: PATCH /api/cart/update ใช้ productId และ quantity ใหม่
     // คำนวณ quantity ใหม่
     const currentQty = item.quantity;
     const newQty = Math.max(1, currentQty + amount);
-    
+
     // ใช้ productId จาก object (ถ้า populate มาจะเป็น productId._id หรือ productId ตาม schema)
     const pId = item.productId?._id || item.productId || item.id;
     await updateQuantity(pId, newQty);
   };
 
   const handleRemoveItem = async (id) => {
-    const item = cartItems.find((item) => item.productId === id || item._id === id || item.id === id);
+    const item = cartItems.find(
+      (item) => item.productId === id || item._id === id || item.id === id,
+    );
     if (!item) return;
-    
+
     const pId = item.productId?._id || item.productId || item.id;
     await removeItem(pId);
   };
 
   const subtotal = cartItems.reduce(
-    (acc, item) => acc + (item.price || item.productId?.price || 0) * item.quantity,
+    (acc, item) =>
+      acc + (item.price || item.productId?.price || 0) * item.quantity,
     0,
   );
 
@@ -78,12 +83,11 @@ export default function Cart() {
   );
 }
 
- <CartSummary subtotal={subtotal} />
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
-
+//  <CartSummary subtotal={subtotal} />
+//             </div>
+//           </div>
+//         )}
+//       </main>
+//     </div>
+//   );
+// }
