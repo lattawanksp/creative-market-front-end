@@ -125,6 +125,24 @@ const Market = () => {
     </div>
   );
 
+  // ฟังก์ชันสำหรับคำนวณกลุ่มปุ่มตัวเลข (Best Practice สำหรับ Pagination สเกลใหญ่)
+  const getPaginationGroup = () => {
+    const maxButtons = 5; // ✨ เธอสามารถปรับตัวเลขนี้ได้ตามใจชอบเลยค่ะว่าอยากให้โชว์กี่ปุ่มพร้อมกันบนหน้าจอ (เช่น 5-8 ปุ่ม)
+    let start = Math.max(1, page - Math.floor(maxButtons / 2));
+    let end = start + maxButtons - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F7FF] py-8 px-4 md:px-12 font-['Anuphan',sans-serif]">
       <div className="max-w-7xl mx-auto">
@@ -166,44 +184,69 @@ const Market = () => {
         {/* ปุ่มควบคุมการแบ่งหน้า (Pagination Controls) */}
         {!loading && totalPages > 1 && (
           <div className="mt-10 flex justify-center items-center gap-2">
-            {/* ปุ่มย้อนกลับ (Previous) */}
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
+            {/* แถบควบคุมหน้าจอ Pagination โฉมใหม่ สวยเนี๊ยบสะกดสายตา */}
+            <div className="flex justify-center items-center gap-2 mt-8 mb-10 flex-wrap">
+              {/* ปุ่มย้อนกลับ (Previous) */}
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg border text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
 
-            {/* วนลูปเสกปุ่มตามจำนวนหน้าทั้งหมดที่มี (เช่น มี 9 หน้า ก็เสกมา 9 ปุ่ม) */}
-            {Array.from({ length: totalPages }, (_, index) => {
-              const pageNum = index + 1;
-              return (
+              {/* แสดงปุ่มลัดเฉพาะหน้าแรกสุด ถ้าหน้าปัจจุบันมันขยับไปไกลแล้ว */}
+              {page > 3 && (
+                <>
+                  <button
+                    onClick={() => setPage(1)}
+                    className="px-3 py-1.5 rounded-lg border text-sm font-semibold text-[#373373]"
+                  >
+                    1
+                  </button>
+                  <span className="text-gray-400 px-1">...</span>
+                </>
+              )}
+
+              {/* 🚨 เปลี่ยนมาวนลูปจากฟังก์ชันกลุ่มตัวเลขที่เราจำกัดไว้ตรงนี้ค่ะเด็กดี! */}
+              {getPaginationGroup().map((pageNumber) => (
                 <button
-                  key={pageNum}
-                  type="button"
-                  onClick={() => setPage(pageNum)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    page === pageNum
-                      ? "bg-[#6D5DD3] text-white"
-                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  key={pageNumber}
+                  onClick={() => setPage(pageNumber)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
+                    page === pageNumber
+                      ? "bg-[#6D5DD3] text-white border-[#6D5DD3]" // สีตอนกำลังเปิดหน้านั้นอยู่
+                      : "bg-white text-[#373373] border-gray-200 hover:bg-[#EBE9FF]"
                   }`}
                 >
-                  {pageNum}
+                  {pageNumber}
                 </button>
-              );
-            })}
+              ))}
 
-            {/* ปุ่มไปข้างหน้า (Next) */}
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
+              {/* แสดงจุดไข่ปลาและปุ่มหน้าสุดท้าย เพื่อให้ลูกค้ารู้ขอบเขตสินค้าทั้งหมด */}
+              {page < totalPages - 2 && (
+                <>
+                  <span className="text-gray-400 px-1">...</span>
+                  <button
+                    onClick={() => setPage(totalPages)}
+                    className="px-3 py-1.5 rounded-lg border text-sm font-semibold text-[#373373]"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+
+              {/* ปุ่มถัดไป (Next) */}
+              <button
+                onClick={() =>
+                  setPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg border text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

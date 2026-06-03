@@ -1,14 +1,10 @@
 import { useState, useCallback } from "react";
-import { useCart } from "../../context/CartContext";
 
 const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
 
 const useCheckoutActions = () => {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  const { refreshCart } = useCart();
 
   // 1. ดึงรายการที่อยู่ (ปรับให้ใช้เส้นเดียวกับหน้า Profile เพื่อน)
   const fetchAddresses = useCallback(async () => {
@@ -95,7 +91,7 @@ const useCheckoutActions = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        refreshCart(); // ล้างตะกร้าในระบบหลังจากสั่งซื้อสำเร็จ
+        // refreshCart() ถูกลบออกเพื่อคงสินค้าในตะกร้าไว้จนกว่าจะจ่ายเงินสำเร็จ
         return data.data; // ส่งข้อมูล Order กลับไปเพื่อนำทางไปหน้า Payment
       } else {
         throw new Error(data.message || "Checkout failed");
@@ -111,7 +107,6 @@ const useCheckoutActions = () => {
   return {
     addresses,
     loading,
-    error,
     fetchAddresses,
     addAddress,
     deleteAddress,

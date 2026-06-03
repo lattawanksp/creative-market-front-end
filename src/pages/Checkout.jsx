@@ -34,6 +34,12 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-[#F3EFFF]">
       <main className="max-w-5xl w-full mx-auto p-6">
+        <button 
+          className="text-blue-500 text-xs flex items-center gap-1 hover:underline cursor-pointer mb-6" 
+          onClick={() => navigate('/cart')}>
+          <ArrowLeft size={16}/>
+          RETURN TO CART
+        </button>
         <CheckoutHeader />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-20">
           <div className="lg:col-span-7">

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 
 const usePaymentActions = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshCart } = useCart();
   const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
 
   // ฟังก์ชันอัปเดตสถานะออเดอร์เป็น "paid"
@@ -14,6 +16,7 @@ const usePaymentActions = () => {
       if (!orderId || orderId === "MOCK_ORDER_12345") {
         console.log("Mock Payment Confirmed");
         setTimeout(() => {
+          refreshCart();
           navigate("/complete");
         }, 1000);
         return;
@@ -28,6 +31,7 @@ const usePaymentActions = () => {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        refreshCart(); // ล้างตะกร้าหน้าบ้านหลังจาก Backend แจ้งว่าจ่ายเงินสำเร็จแล้ว
         navigate("/complete");
       } else {
         throw new Error(data.message || "Payment confirmation failed");

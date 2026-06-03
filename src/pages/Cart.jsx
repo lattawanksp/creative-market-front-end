@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import CartHeader from "../components/Cart/01_CartHeader";
 import CartTable from "../components/Cart/02_CartTable";
 import CartSummary from "../components/Cart/03_CartSummary";
@@ -6,6 +8,7 @@ import { useCart } from "../context/CartContext";
 import { useCartActions } from "../components/Cart/useCartActions";
 
 export default function Cart() {
+  const navigate = useNavigate();
   const { cartItems, loadingCart } = useCart();
   const { updateQuantity, removeItem } = useCartActions();
 
@@ -67,6 +70,15 @@ export default function Cart() {
           <div className="flex justify-end mt-10">
             <div className="w-full md:w-1/2">
               <CartSummary subtotal={subtotal} />
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+ <CartSummary subtotal={subtotal} />
             </div>
           </div>
         )}
