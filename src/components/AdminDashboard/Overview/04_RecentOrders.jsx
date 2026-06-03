@@ -1,4 +1,4 @@
-import OrderRow from "../Orders/01_OrderRow";
+import RecentOrderRow from "./05_RecentOrderRow";
 
 const RecentOrders = ({ orders, onOpenOrders }) => {
   return (
@@ -21,15 +21,11 @@ const RecentOrders = ({ orders, onOpenOrders }) => {
                 <th className="px-4 py-4 font-semibold">Customer</th>
                 <th className="px-4 py-4 text-right font-semibold">Amount</th>
                 <th className="px-4 py-4 font-semibold">Status</th>
-                <th className="px-4 py-4 font-semibold">Courier</th>
-                <th className="px-4 py-4 font-semibold md:px-6">
-                  Tracking Number
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {orders.map((order) => (
-                <OrderRow key={order.id} order={order} />
+                <RecentOrderRow key={order.id} order={order} />
               ))}
             </tbody>
           </table>

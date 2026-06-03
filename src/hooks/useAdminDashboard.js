@@ -36,56 +36,70 @@ const useAdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const requestDashboardData = async (signal) => {
+    const options = {
+      credentials: "include",
+      ...(signal ? { signal } : {}),
+    };
+
+    const requests = await Promise.all([
+      fetch(`${serverBaseUrl}/api/admin-dashboard/overview`, options),
+      fetch(`${serverBaseUrl}/api/admin-dashboard/orders`, options),
+      fetch(`${serverBaseUrl}/api/admin-dashboard/sales`, options),
+    ]);
+
+    const responses = await Promise.all(requests.map((request) => request.json()));
+    const failedIndex = requests.findIndex((request) => !request.ok);
+
+    if (failedIndex >= 0) {
+      throw new Error(
+        responses[failedIndex]?.message || "Failed to load admin dashboard",
+      );
+    }
+
+    return {
+      overview: responses[0]?.data || initialState.overview,
+      orders: responses[1]?.data || initialState.orders,
+      sales: responses[2]?.data || initialState.sales,
+    };
+  };
+
+  const refetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const nextDashboardData = await requestDashboardData();
+      setDashboardData(nextDashboardData);
+    } catch (fetchError) {
+      setError(fetchError.message || "Failed to load admin dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
+    requestDashboardData(controller.signal)
+      .then((nextDashboardData) => {
+        setDashboardData(nextDashboardData);
         setError("");
-
-        const options = {
-          credentials: "include",
-          signal: controller.signal,
-        };
-
-        const requests = await Promise.all([
-          fetch(`${serverBaseUrl}/api/admin-dashboard/overview`, options),
-          fetch(`${serverBaseUrl}/api/admin-dashboard/orders`, options),
-          fetch(`${serverBaseUrl}/api/admin-dashboard/sales`, options),
-        ]);
-
-        const responses = await Promise.all(requests.map((request) => request.json()));
-        const failedIndex = requests.findIndex((request) => !request.ok);
-
-        if (failedIndex >= 0) {
-          throw new Error(
-            responses[failedIndex]?.message || "Failed to load admin dashboard",
-          );
-        }
-
-        setDashboardData({
-          overview: responses[0]?.data || initialState.overview,
-          orders: responses[1]?.data || initialState.orders,
-          sales: responses[2]?.data || initialState.sales,
-        });
-      } catch (fetchError) {
+      })
+      .catch((fetchError) => {
         if (fetchError.name === "AbortError") {
           return;
         }
 
         setError(fetchError.message || "Failed to load admin dashboard");
-      } finally {
+      })
+      .finally(() => {
         setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
+      });
 
     return () => controller.abort();
   }, []);
 
-  return { dashboardData, loading, error };
+  return { dashboardData, loading, error, refetchDashboardData };
 };
 
 export default useAdminDashboard;

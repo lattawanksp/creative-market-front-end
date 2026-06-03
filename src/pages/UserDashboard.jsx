@@ -7,7 +7,8 @@ import useUserDashboard from "../hooks/useUserDashboard";
 
 const UserDashboard = () => {
   const [activePage, setActivePage] = useState("overview");
-  const { dashboardData, loading, error } = useUserDashboard();
+  const { dashboardData, loading, error, refetchDashboardData } =
+    useUserDashboard();
 
   const renderPage = () => {
     switch (activePage) {
@@ -18,6 +19,7 @@ const UserDashboard = () => {
             summary={dashboardData.ordersSummary}
             loading={loading}
             error={error}
+            onRefresh={refetchDashboardData}
           />
         );
       case "my-address":

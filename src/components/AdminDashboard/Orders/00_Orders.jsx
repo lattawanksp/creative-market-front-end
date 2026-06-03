@@ -4,11 +4,49 @@ import OrderRow from "./01_OrderRow";
 
 const ORDERS_PER_PAGE = 10;
 
-const Orders = ({ summary, orders, loading, error }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+const groupOrdersByOrderId = (orders) =>
+  Object.values(
+    orders.reduce((acc, item) => {
+      if (!acc[item.orderId]) {
+        acc[item.orderId] = {
+          id: item.orderId,
+          orderId: item.orderId,
+          status: item.status,
+          statusLabel: item.statusLabel,
+          createdAt: item.createdAt,
+          customer: item.customer,
+          courier: item.courier || "",
+          trackingNumber: item.trackingNumber || "",
+          paymentProofStatus: item.paymentProofStatus || "none",
+          paymentProofStatusLabel: item.paymentProofStatusLabel || "",
+          transferDate: item.transferDate || "",
+          transferTime: item.transferTime || "",
+          transferAmount: item.transferAmount || 0,
+          items: [],
+          totalAmount: 0,
+          totalQuantity: 0,
+        };
+      }
 
-  const totalPages = Math.ceil(orders.length / ORDERS_PER_PAGE);
-  const paginatedOrders = orders.slice(
+      acc[item.orderId].items.push(item);
+      acc[item.orderId].totalAmount += item.amount || item.price * item.quantity;
+      acc[item.orderId].totalQuantity += item.quantity || 0;
+
+      return acc;
+    }, {}),
+  ).map((group) => ({
+    ...group,
+    primaryItem: group.items[0],
+    extraItems: group.items.slice(1),
+  }))
+    .filter((group) => group.primaryItem);
+
+const Orders = ({ summary, orders, loading, error, onRefresh }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const groupedOrders = groupOrdersByOrderId(orders);
+
+  const totalPages = Math.ceil(groupedOrders.length / ORDERS_PER_PAGE);
+  const paginatedOrders = groupedOrders.slice(
     (currentPage - 1) * ORDERS_PER_PAGE,
     currentPage * ORDERS_PER_PAGE,
   );
@@ -72,14 +110,14 @@ const Orders = ({ summary, orders, loading, error }) => {
                 <th className="px-4 py-4 text-right font-semibold">Amount</th>
                 <th className="px-4 py-4 font-semibold">Status</th>
                 <th className="px-4 py-4 font-semibold">Courier</th>
-                <th className="px-4 py-4 font-semibold md:px-6">
-                  Tracking Number
-                </th>
+                <th className="px-4 py-4 font-semibold">Tracking Number</th>
+                <th className="px-4 py-4 font-semibold">Transfer Info</th>
+                <th className="px-4 py-4 font-semibold md:px-6">Review</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {paginatedOrders.map((order) => (
-                <OrderRow key={order.id} order={order} />
+                <OrderRow key={order.id} order={order} onRefresh={onRefresh} />
               ))}
             </tbody>
           </table>

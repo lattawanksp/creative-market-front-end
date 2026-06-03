@@ -7,7 +7,8 @@ import useAdminDashboard from "../hooks/useAdminDashboard";
 
 const AdminDashboard = () => {
   const [activePage, setActivePage] = useState("overview");
-  const { dashboardData, loading, error } = useAdminDashboard();
+  const { dashboardData, loading, error, refetchDashboardData } =
+    useAdminDashboard();
 
   const renderPage = () => {
     switch (activePage) {
@@ -18,6 +19,7 @@ const AdminDashboard = () => {
             orders={dashboardData.orders.orders}
             loading={loading}
             error={error}
+            onRefresh={refetchDashboardData}
           />
         );
       case "sales":

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import OrderCard from "./01_OrderCard";
 
+const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
+
 const tabs = [
   { label: "All", value: "All" },
   { label: "รอดำเนินการ", value: "pending" },
@@ -28,6 +30,11 @@ const groupOrdersByOrderId = (orders) =>
           createdAt: item.createdAt,
           courier: item.courier || "",
           trackingNumber: item.trackingNumber || "",
+          paymentProofStatus: item.paymentProofStatus || "",
+          paymentProofStatusLabel: item.paymentProofStatusLabel || "",
+          transferDate: item.transferDate || "",
+          transferTime: item.transferTime || "",
+          transferAmount: item.transferAmount || 0,
           items: [],
           totalAmount: 0,
           totalQuantity: 0,
@@ -46,9 +53,32 @@ const groupOrdersByOrderId = (orders) =>
     extraItems: group.items.slice(1),
   }));
 
-const MyOrders = ({ orders, summary, loading, error }) => {
+const MyOrders = ({ orders, summary, loading, error, onRefresh }) => {
   const [activeTab, setActiveTab] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const handleSubmitPaymentProof = async (orderId, payload) => {
+    const response = await fetch(
+      `${serverBaseUrl}/api/user-dashboard/orders/${orderId}/payment-proof`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      },
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "ไม่สามารถส่งข้อมูลการโอนเงินได้");
+    }
+
+    await onRefresh?.();
+    return result.data;
+  };
 
   const groupedOrders = groupOrdersByOrderId(orders);
 
@@ -70,9 +100,7 @@ const MyOrders = ({ orders, summary, loading, error }) => {
   ];
 
   if (loading) {
-    return (
-      <section className="text-sm text-gray-500">Loading orders...</section>
-    );
+    return <section className="text-sm text-gray-500">Loading orders...</section>;
   }
 
   if (error) {
@@ -131,7 +159,11 @@ const MyOrders = ({ orders, summary, loading, error }) => {
       <div className="space-y-4">
         {paginatedOrders.length > 0 ? (
           paginatedOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onSubmitPaymentProof={handleSubmitPaymentProof}
+            />
           ))
         ) : (
           <div className="rounded-2xl bg-white p-6 text-sm text-gray-400">
