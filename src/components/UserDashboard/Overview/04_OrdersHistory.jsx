@@ -6,7 +6,7 @@ const OrdersHistory = ({ orders, onOpenOrders }) => {
       <div className="mb-5">
         <h3 className="text-xl font-bold text-gray-900">Orders history</h3>
         <p className="mt-1 text-sm text-gray-400">
-          A snapshot of past orders and total amounts.
+          ดูคำสั่งซื้อที่สำเร็จแล้ว
         </p>
       </div>
 
@@ -65,7 +65,7 @@ const OrdersHistory = ({ orders, onOpenOrders }) => {
                     colSpan="2"
                     className="px-4 py-6 text-center text-sm text-gray-400 md:px-8"
                   >
-                    No paid orders yet.
+                    ยังไม่มีคำสั่งซื้อที่สำเร็จแล้ว
                   </td>
                 </tr>
               )}

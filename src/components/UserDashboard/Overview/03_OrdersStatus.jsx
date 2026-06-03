@@ -12,7 +12,7 @@ const OrdersStatus = ({ orders, onOpenOrders }) => {
       <div className="mb-5">
         <h3 className="text-xl font-bold text-gray-900">Orders status</h3>
         <p className="mt-1 text-sm text-gray-400">
-          Track your most recent purchases in one place.
+          ติดตามคำสั่งซื้อที่อยู่ระหว่างการดำเนินการ
         </p>
       </div>
 
@@ -79,7 +79,7 @@ const OrdersStatus = ({ orders, onOpenOrders }) => {
                     colSpan="3"
                     className="px-4 py-6 text-center text-sm text-gray-400 md:px-8"
                   >
-                    No pending orders yet.
+                    ยังไม่มีคำสั่งซื้อที่รอดำเนินการ
                   </td>
                 </tr>
               )}
