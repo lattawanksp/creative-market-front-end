@@ -101,14 +101,28 @@ const ProductCard = ({ product, isLoggedIn, userRole, onAddToCartSuccess }) => {
 
         <div className="mt-auto pt-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
+              {" "}
+              {/* 1. ปรับ gap ให้กระชับขึ้นเพื่อรองรับบรรทัดใหม่ */}
               <span className="text-[11px] text-gray-400 font-medium">
                 Artist
               </span>
-              <span className="text-xs font-bold text-gray-700">
+              <span className="text-xs font-bold text-gray-700 truncate max-w-[120px]">
                 by {product.artist}
               </span>
+              {/* 2. เพิ่มการโชว์จำนวนสินค้าคงเหลือ (Quantity) ตามที่เธอต้องการ */}
+              <span
+                className={`text-[11px] font-semibold mt-0.5 ${
+                  product.quantity > 0 ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {product.quantity > 0
+                  ? `In Stock: ${product.quantity}`
+                  : "Out of Stock"}
+              </span>
             </div>
+
+            {/* ราคาด้านขวาคงเดิมสวยๆ อยู่แล้วค่ะ */}
             <span className="text-xl font-extrabold text-[#373373]">
               ฿{product.price?.toLocaleString()}
             </span>
@@ -127,10 +141,18 @@ const ProductCard = ({ product, isLoggedIn, userRole, onAddToCartSuccess }) => {
 
           <button
             onClick={handleAddToCart}
-            disabled={adding}
-            className="w-full bg-[#6D5DD3] hover:bg-[#5b4db8] disabled:opacity-60 text-white py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm hover:cursor-pointer text-sm mt-1"
+            disabled={adding || product.quantity <= 0}
+            className={`w-full py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm text-sm mt-1 text-white ${
+              product.quantity <= 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#6D5DD3] hover:bg-[#5b4db8] hover:cursor-pointer" //
+            } disabled:opacity-60`}
           >
-            {adding ? "Adding..." : "Add to Cart"}
+            {product.quantity <= 0
+              ? "Out of Stock"
+              : adding
+                ? "Adding..."
+                : "Add to Cart"}
           </button>
         </div>
       </div>

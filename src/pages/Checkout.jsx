@@ -2,25 +2,34 @@ import React, { useState, useEffect } from "react";
 import CheckoutHeader from "../components/Checkout/01_CheckoutHeader";
 import CheckoutForm from "../components/Checkout/02_CheckoutForm";
 import CheckoutSummary from "../components/Checkout/03_CheckoutSummary";
+import { useCart } from "../context/CartContext";
+import useCheckoutActions from "../components/Checkout/useCheckoutActions";
 
 export default function Checkout() {
-  const [cartItems, setCartItems] = useState([]);
+  const { cartItems, loadingCart } = useCart();
+  const { 
+    addresses, 
+    fetchAddresses, 
+    addAddress, 
+    deleteAddress, 
+    createOrder,
+    loading: loadingActions 
+  } = useCheckoutActions();
+  
   const [paymentMethod, setPaymentMethod] = useState("Promptpay");
 
-  const [addresses, setAddresses] = useState([
-    { id: 1, name: "Star Chaser", detail: "123/45 ... Mark district 22000" },
-  ]);
-  const [selectedAddressId, setSelectedAddressId] = useState(1); // ล็อคตัวแรกไว้
-
   useEffect(() => {
-    const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    setCartItems(savedCart);
-  }, []);
+    fetchAddresses();
+  }, [fetchAddresses]);
 
   const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc, item) => acc + (item.price || item.productId?.price || 0) * item.quantity,
     0,
   );
+
+  if (loadingCart) {
+    return <div className="pt-20 text-center min-h-screen bg-[#F3EFFF]">กำลังโหลดข้อมูล...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#F3EFFF]">
@@ -32,17 +41,19 @@ export default function Checkout() {
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
               addresses={addresses} 
-              setAddresses={setAddresses} 
-              selectedAddressId={selectedAddressId} 
-              setSelectedAddressId={setSelectedAddressId} 
+              onAddAddress={addAddress}
+              onDeleteAddress={deleteAddress}
+              loading={loadingActions}
             />
           </div>
           <div className="lg:col-span-5">
             <CheckoutSummary
               cartItems={cartItems}
               subtotal={subtotal}
-              selectedAddressId={selectedAddressId}
+              hasAddress={addresses.length > 0}
               paymentMethod={paymentMethod}
+              onCreateOrder={createOrder}
+              loading={loadingActions}
             />
           </div>
         </div>
@@ -50,3 +61,4 @@ export default function Checkout() {
     </div>
   );
 }
+

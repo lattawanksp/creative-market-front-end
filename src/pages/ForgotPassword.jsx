@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import emailjs from "@emailjs/browser";
 
 import bgDesktop from "../assets/images/j-login-bg.jpg";
 import bgMobile from "../assets/images/j-login-bg.jpg";
@@ -19,7 +18,7 @@ const ForgotPassword = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleRequestToken = (e) => {
+  const handleRequestToken = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
@@ -29,56 +28,37 @@ const ForgotPassword = () => {
       return;
     }
 
-    // ตรวจสอบว่ามีอีเมลนี้สมัครไว้ในระบบจำลอง (LocalStorage) หรือไม่
-    const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
-    const userExists = storedUsers.some((user) => user.email === email);
-
-    if (!userExists) {
-      setError("This email address is not registered!!");
-      return;
-    }
-
     setIsLoading(true);
 
-    // 1. ตัวโปรแกรมของเราสร้าง (สุ่ม) Token 6 หลักขึ้นมาเอง
-    const mockToken = Math.floor(100000 + Math.random() * 900000).toString();
+    try {
+      // ดึง URL จาก Environment Variable (หรือใช้ localhost เป็นตัวสำรอง)
+      const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
+      const apiUrl = `${apiBaseUrl}/api/auth/forgot-password`;
 
-    // 2. เซฟเก็บไว้ในเครื่องเราชั่วคราว เพื่อเอาไว้เทียบตอนที่เขากดลิงก์กลับมา
-    localStorage.setItem(
-      "resetPasswordToken",
-      JSON.stringify({ email, token: mockToken }),
-    );
-
-    // 3. สร้างลิงก์ที่จะแนบไปในจดหมาย (พ่วงเอา Token แปะไปบน URL ด้วย)
-    const resetLink = `${window.location.origin}/reset-password?token=${mockToken}`;
-
-    // 4. เตรียมข้อมูลส่งให้พนักงาน (EmailJS) ถือไปส่ง
-    const templateParams = {
-      to_email: email,
-      reset_link: resetLink,
-    };
-
-    // 5. เรียกใช้ EmailJS เพื่อยิงอีเมลจริงออกไป
-    // *** อย่าลืมเอา KEY จริงจากเว็บ EmailJS มาใส่แทนที่อักษรตัวใหญ่ด้านล่างนะครับ ***
-    emailjs
-      .send(
-        "service_gbu9e6o", // Service ID ของเรา
-        "template_x07aydb", // Template ID ของเรา
-        templateParams,
-        "Ar5pOgj3RsyZ6mrUh", // Public Key ของเรา
-      )
-      .then((response) => {
-        console.log("SUCCESS!", response.status, response.text);
-        setSuccessMessage(
-          "ระบบได้ส่งลิงก์กู้คืนรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว กรุณาเช็คที่กล่องข้อความของคุณครับ",
-        );
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error("FAILED...", err);
-        setError("เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่อีกครั้ง");
-        setIsLoading(false);
+      // ยิง API ไปที่ Backend
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({ email })
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "เกิดข้อผิดพลาดในการส่งข้อมูล");
+      }
+
+      setSuccessMessage(
+        "ระบบได้ส่งลิงก์กู้คืนรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว กรุณาเช็คที่กล่องข้อความของคุณครับ"
+      );
+    } catch (err) {
+      console.error("FAILED...", err);
+      setError(err.message || "เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,15 +72,15 @@ const ForgotPassword = () => {
         }}
       />
 
-      <div className="scale-85 md:scale-75 relative z-10 bg-[#7b74c4]/60 backdrop-blur-md w-full max-w-[540px] h-auto min-h-[350px] md:min-h-[420px] rounded-[40px] shadow-2xl p-8 md:p-10 text-center border border-white/20 mx-6 -translate-y-10 md:-translate-y-15">
+      <div className="scale-90 md:scale-100 relative z-10 bg-[#7b74c4]/60 backdrop-blur-md w-full max-w-[540px] h-auto min-h-[300px] md:min-h-[300px] rounded-[40px] shadow-2xl p-8 md:p-10 text-center border border-white/20 mx-6 -translate-y-10 md:-translate-y-12">
         <h2 className="text-3xl font-bold text-white mb-6 -translate-y-0 md:-translate-y-2.5">
           Forgot Password
         </h2>
 
         {successMessage ? (
-          <div className="text-left bg-green-500/20 border border-green-500/40 p-4 rounded-xl text-white space-y-4">
+          <div className="scale-110 md:scale-110 text-left bg-green-500/20 border border-green-500/40 p-4 rounded-xl text-white space-y-4">
             <p className="text-sm font-medium">{successMessage}</p>
-            <p className="text-xs text-white/70">
+            <p className="text-sm text-white/70">
               *ไปเปิดอีเมลแล้วคลิกลิงก์เพื่อตั้งรหัสผ่านใหม่ได้เลยครับ
             </p>
           </div>
@@ -147,7 +127,7 @@ const ForgotPassword = () => {
           </>
         )}
 
-        <div className="mt-6 text-sm text-white/90 translate-y-5 md:translate-y-5">
+        <div className="mt-6 text-sm text-white/90 translate-y-5 md:translate-y-2.5">
           <p>
             Remember your password?{" "}
             <span

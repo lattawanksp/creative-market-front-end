@@ -1,3 +1,7 @@
+import { Link } from "react-router-dom";
+
+const getCategoryFromTag = (tag) => tag.replace("#", "").trim();
+
 const ProductPurchasePanel = ({
   product,
   onAddToCart,
@@ -12,14 +16,19 @@ const ProductPurchasePanel = ({
     <section className="w-full text-[#2f2b78]">
       <div className="flex flex-col gap-5 md:gap-6">
         <div className="flex flex-wrap gap-3">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex min-w-28 items-center justify-center rounded-md border border-[#b7b2d7] px-3 py-2 text-[11px] font-medium tracking-[0.01em] text-[#5a5596] sm:min-w-32 sm:px-4 sm:text-sm"
-            >
-              {tag}
-            </span>
-          ))}
+          {tags.map((tag) => {
+            const category = getCategoryFromTag(tag);
+
+            return (
+              <Link
+                key={tag}
+                to={`/market?category=${encodeURIComponent(category)}`}
+                className="inline-flex min-w-28 items-center justify-center rounded-md border border-[#b7b2d7] px-3 py-2 text-[11px] font-medium tracking-[0.01em] text-[#5a5596] transition hover:bg-[#f5f3ff] sm:min-w-32 sm:px-4 sm:text-sm"
+              >
+                {tag}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">

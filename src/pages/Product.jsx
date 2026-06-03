@@ -21,15 +21,16 @@ const Product = () => {
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
+  const apiBaseUrl = `${serverBaseUrl}/api`;
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `http://localhost:7777/api/products/${productSlug}`,
-        );
+        const response = await fetch(`${apiBaseUrl}/products/${productSlug}`);
 
         const result = await response.json();
 
@@ -71,10 +72,6 @@ const Product = () => {
     setAdding(true);
 
     try {
-      const serverBaseUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:7777";
-      const apiBaseUrl = `${serverBaseUrl}/api`;
-
       const response = await fetch(`${apiBaseUrl}/cart/add`, {
         method: "POST",
         headers: {

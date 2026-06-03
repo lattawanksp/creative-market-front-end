@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 
 const MAX_SUGGESTIONS = 5;
 
+const serverBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:7777";
+
+const apiBaseUrl = `${serverBaseUrl}/api`;
+
 const ProductHeaderBar = ({ category = "Craft & Handmade" }) => {
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -22,9 +26,9 @@ const ProductHeaderBar = ({ category = "Craft & Handmade" }) => {
         setIsSearching(true);
 
         const response = await fetch(
-          `http://localhost:7777/api/products?search=${encodeURIComponent(
+          `${apiBaseUrl}/products?search=${encodeURIComponent(
             trimmedSearch,
-          )}`,
+          )}&limit=${MAX_SUGGESTIONS}`,
         );
 
         const result = await response.json();
@@ -89,7 +93,7 @@ const ProductHeaderBar = ({ category = "Craft & Handmade" }) => {
             </div>
 
             {shouldShowDropdown && (
-              <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-xl border border-[#b7b2d7] bg-white shadow-xl">
+              <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-[420px] overflow-y-auto overscroll-contain rounded-xl border border-[#b7b2d7] bg-white shadow-xl">
                 {isSearching ? (
                   <p className="px-4 py-4 text-sm font-medium text-[#6b648b]">
                     Searching...

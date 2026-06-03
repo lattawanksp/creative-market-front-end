@@ -1,4 +1,9 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { useEffect } from "react";
+
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
+
 import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home";
 
@@ -86,8 +91,8 @@ const router = createBrowserRouter([
         path: "/forgot-password",
         element: <ForgotPassword />,
       },
-      {
-        path: "/reset-password",
+     {
+        path: "/reset-password/:token",
         element: <ResetPassword />,
       },
     ],
@@ -95,6 +100,25 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // เคลื่อนไหวสมูทแบบอินเตอร์
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    // เคลียร์ค่าทิ้งเมื่อ component ถูกทำลาย
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
   return <RouterProvider router={router} />;
 }
 

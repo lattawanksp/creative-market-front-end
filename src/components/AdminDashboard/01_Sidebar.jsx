@@ -4,7 +4,7 @@ import {
   PackagePlus,
   ShoppingCart,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -14,7 +14,7 @@ const navItems = [
 ];
 
 const Sidebar = ({ activePage, onNavigate }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   return (
     <aside className="flex min-h-screen w-36 shrink-0 flex-col bg-[#1e1b4b] px-3 py-5 md:w-44 md:px-4 md:py-6">
@@ -35,10 +35,10 @@ const Sidebar = ({ activePage, onNavigate }) => {
               key={item.id}
               type="button"
               onClick={() => {
-                if (item.id === "artist-drop") {
-                  navigate("/artist-drop");
-                  return;
-                }
+                // if (item.id === "artist-drop") {
+                // navigate("/artist-drop");
+                //   return;
+                // }
 
                 onNavigate(item.id);
               }}

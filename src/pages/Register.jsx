@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-
 import bgDesktop from "../assets/images/t_pages_register_destop_bg.png";
 import bgMobile from "../assets/images/t_pages_register_mobile_bg.png";
 import imgRegisterDesktop from "../assets/images/t_pages_register_desktop_texi.png";
@@ -17,6 +16,7 @@ const Register = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // ควบคุมสถานะ Loading
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -72,31 +72,26 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // แก้ไขเฉพาะส่วนนี้: เปลี่ยนเป็น async และใช้ fetch API แทน LocalStorage
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!validate()) return;
 
-    if (parseInt(captcha.userAnswer) !== captcha.num1 + captcha.num2) {
-      setErrors({ ...errors, userAnswer: "Incorrect answer!!" });
-      generateCaptcha();
-      return;
-    }
+    // เริ่มโหลดและล็อคปุ่ม
+    setIsLoading(true);
 
-    // ดึง URL จาก Environment Variables
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7777';
 
     try {
-      // 1. ตรวจสอบอีเมลซ้ำกับ Backend
       const emailCheckRes = await fetch(`${API_URL}/api/users/check-email?email=${formData.email}`);
       const emailCheck = await emailCheckRes.json();
       
       if (emailCheck.exists) {
         setErrors({ ...errors, email: "Email already in use" });
+        generateCaptcha(); // รีเฟรช CAPTCHA เมื่ออีเมลซ้ำ
         return;
       }
 
-      // 2. ส่งข้อมูลสมัครสมาชิกไปที่ Backend
       const registerRes = await fetch(`${API_URL}/api/users/register`, {
         method: 'POST',
         headers: {
@@ -113,20 +108,23 @@ const Register = () => {
 
       if (!registerRes.ok) {
         setErrors({ ...errors, email: registerData.message || 'Something went wrong' });
+        generateCaptcha(); // รีเฟรช CAPTCHA เมื่อ Backend ส่ง Error แจ้งเตือนกลับมา
         return;
       }
 
-      // สมัครสำเร็จ
       setIsSuccess(true);
 
     } catch (error) {
       console.error("Registration error:", error);
       setErrors({ ...errors, email: "Failed to connect to the server" });
+      generateCaptcha(); // รีเฟรช CAPTCHA เมื่อเชื่อมต่อเซิร์ฟเวอร์ไม่ได้
+    } finally {
+      // ปลดล็อคปุ่มเสมอ
+      setIsLoading(false);
     }
   };
 
   return (
-    /* แก้ไขจุดที่ 1: เปลี่ยน h-[1000px] เป็น h-screen เพื่อให้ความสูงพอดีกับหน้าต่างเบราว์เซอร์อัตโนมัติ ทำให้พื้นที่บน-ล่างสมดุลกันเสมอ */
     <div className="fixed inset-0 w-full h-screen flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat md:bg-[url('/path-to-your-desktop-bg.png')] bg-[url('/path-to-your-mobile-bg.png')]">
       <div 
         className="absolute inset-0 bg-cover bg-no-repeat transition-all duration-500"
@@ -137,7 +135,6 @@ const Register = () => {
         }}
       />  
 
-      {/* แก้ไขจุดที่ 2: ลบ mt-0 -translate-y-50 md:-translate-y-43.5 ที่เป็นต้นเหตุของการ์ดกระโดดออกไป เพื่อให้มันเกาะระดับกึ่งกลางเสมอตามธรรมชาติของ Flexbox ตัวแม่ */}
       <div className="scale-80 relative z-10 bg-[#8b84d7]/60 w-full max-w-[400px] md:max-w-[1096px] min-h-[500px] md:min-h-[688px] h-auto rounded-[24px] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-white/10 mx-auto py-10 px-6 md:p-0">
         
         <div className="hidden md:block w-1/2 p-6">
@@ -160,7 +157,8 @@ const Register = () => {
                 type="email" 
                 name="email" 
                 placeholder="Enter your email address!!" 
-                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.email ? 'border-red-500' : 'border-white'}`}
+                disabled={isLoading}
+                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.email ? 'border-red-500' : 'border-white'} ${isLoading ? 'opacity-50' : ''}`}
                 value={formData.email} 
                 onChange={handleChange} 
               />
@@ -172,7 +170,8 @@ const Register = () => {
                 type="password" 
                 name="password" 
                 placeholder="Enter your password" 
-                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.password ? 'border-red-500' : 'border-white'}`}
+                disabled={isLoading}
+                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.password ? 'border-red-500' : 'border-white'} ${isLoading ? 'opacity-50' : ''}`}
                 value={formData.password} 
                 onChange={handleChange} 
               />
@@ -184,7 +183,8 @@ const Register = () => {
                 type="password" 
                 name="confirmPassword" 
                 placeholder="Enter password confirmation" 
-                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.confirmPassword ? 'border-red-500' : 'border-white'}`}
+                disabled={isLoading}
+                className={`w-full px-6 py-3 md:py-3.5 rounded-full bg-[#a9a4e4] placeholder-white/80 text-white border-2 outline-none focus:ring-4 focus:ring-white/50 text-sm shadow-lg ${errors.confirmPassword ? 'border-red-500' : 'border-white'} ${isLoading ? 'opacity-50' : ''}`}
                 value={formData.confirmPassword} 
                 onChange={handleChange} 
               />
@@ -198,7 +198,8 @@ const Register = () => {
                 </span>
                 <input
                   type="number" name="userAnswer" placeholder="?"
-                  className="w-16 p-2 rounded-lg bg-white text-[#1e1a3d] text-center font-bold outline-none"
+                  disabled={isLoading}
+                  className={`w-16 p-2 rounded-lg bg-white text-[#1e1a3d] text-center font-bold outline-none ${isLoading ? 'opacity-50' : ''}`}
                   value={captcha.userAnswer} onChange={handleChange}
                 />
               </div>
@@ -207,9 +208,24 @@ const Register = () => {
 
             <button
               type="submit"
-              className="w-full py-5 mt-4 bg-[#1e1a3d] hover:bg-[#2d2859] hover:brightness-150 text-white text-xl font-bold rounded-full shadow-xl transition-all active:scale-95"
+              disabled={isLoading}
+              className={`w-full py-5 mt-4 text-white text-xl font-bold rounded-full shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2 
+                ${isLoading 
+                  ? 'bg-[#1e1a3d]/50 cursor-not-allowed' 
+                  : 'bg-[#1e1a3d] hover:bg-[#2d2859] hover:brightness-150' 
+                }`}
             >
-              Create an account
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                'Create an account'
+              )}
             </button>
           </form>
 

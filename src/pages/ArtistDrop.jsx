@@ -6,17 +6,20 @@ import ItemNames from "../components/Artistdrop/02_ItemNames";
 import SuccessModal from "../components/Global/SuccessModal";
 
 const ArtistDrop = () => {
-  // 1. สร้าง State รวมสำหรับข้อมูลทั้งหมด
+  // 1. อัปเดต State รวมให้มีฟิลด์ใหม่ครบถ้วน
   const [formData, setFormData] = useState({
     file: null,
     itemName: "",
+    slug: "",
+    artist: "",
+    tags: "",
     description: "",
+    fromArtist: "",
     category: "",
     quantity: 1,
     price: "",
   });
 
-  // 2. สร้าง State สำหรับเก็บข้อความ Error
   const [errors, setErrors] = useState({});
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
@@ -24,7 +27,7 @@ const ArtistDrop = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // ถ้ามีการพิมพ์แก้ ให้ลบ Error ของช่องนั้นออก
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -38,44 +41,120 @@ const ArtistDrop = () => {
     }
   };
 
-  // 3. ฟังก์ชันตรวจสอบความถูกต้อง (Validate)
+  // 3. ฟังก์ชันตรวจสอบความถูกต้อง (เพิ่มเงื่อนไขเช็ค slug และ artist)
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.file) newErrors.file = "Please upload your art file.";
     if (!formData.itemName.trim())
       newErrors.itemName = "Item Name is required.";
-    // [เพิ่มใหม่] เช็ค Description
-    if (!formData.description.trim()) {
+    if (!formData.slug.trim()) newErrors.slug = "Slug is required.";
+    if (!formData.artist.trim()) newErrors.artist = "Artist Name is required.";
+    if (!formData.description.trim())
       newErrors.description = "Description is required.";
-    }
+    if (!formData.category) newErrors.category = "Please select a category.";
 
-    // [เพิ่มใหม่] เช็ค Category
-    if (!formData.category) {
-      newErrors.category = "Please select a category.";
-    }
     if (!formData.price) {
       newErrors.price = "Price is required.";
     } else if (Number(formData.price) <= 0) {
       newErrors.price = "Price must be greater than 0.";
     }
-    // สามารถเพิ่มเงื่อนไขอื่นๆ ได้ เช่น description ต้องไม่เกินกี่ตัวอักษร
 
     setErrors(newErrors);
-
-    // ถ้าไม่มี error เลย (Object ว่าง) จะ return true
     return Object.keys(newErrors).length === 0;
   };
 
-  // 4. ฟังก์ชัน Submit
-  const handleSubmit = (e) => {
+  // 4. ฟังก์ชัน Submit (เชื่อม API ด้วย FormData)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Form is valid! Ready to submit:", formData);
-      // ตรงนี้ในอนาคตคือส่งข้อมูลไป Backend
 
-      // [แก้ไข] เมื่อ Validate ผ่าน ให้เปิด Pop-up
-      setIsSuccessOpen(true);
+    if (validateForm()) {
+      try {
+        // ฟังก์ชันแปลงข้อความขึ้นบรรทัดใหม่เป็น Array
+        const formatToParagraphArray = (text) => {
+          if (!text) return [];
+          return text
+            .split("\n")
+            .filter((paragraph) => paragraph.trim() !== "");
+        };
+
+        // ฟังก์ชันแปลงข้อความ Tags (ที่คั่นด้วยลูกน้ำ) เป็น Array
+        const formatTagsToArray = (tagsString) => {
+          if (!tagsString) return [];
+          return tagsString
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag !== "");
+        };
+
+        // สร้าง FormData เพื่อรองรับไฟล์รูปภาพ
+        const formSubmitData = new FormData();
+
+        // แนบข้อมูล Text ปกติ
+        formSubmitData.append("name", formData.itemName);
+        formSubmitData.append("slug", formData.slug); // ส่ง slug
+        formSubmitData.append(
+          "cartName",
+          formData.itemName.replace(/\s+/g, ""),
+        );
+        formSubmitData.append("artist", formData.artist); // ส่ง artist
+        formSubmitData.append("category", formData.category);
+        formSubmitData.append("price", Number(formData.price));
+        formSubmitData.append("quantity", Number(formData.quantity) || 1);
+
+        // แปลง Array เป็น JSON String ก่อนส่ง
+        formSubmitData.append(
+          "tags",
+          JSON.stringify(formatTagsToArray(formData.tags)),
+        ); // ส่ง tags
+        formSubmitData.append(
+          "description",
+          JSON.stringify(formatToParagraphArray(formData.description)),
+        );
+        formSubmitData.append(
+          "fromArtist",
+          JSON.stringify(formatToParagraphArray(formData.fromArtist)),
+        );
+
+        // แนบไฟล์รูปภาพ
+        if (formData.file) {
+          formSubmitData.append("image", formData.file);
+        }
+
+        // ยิง API ไปหา Backend ที่ Port 7777 (ใช้ FormData ห้ามใส่ Content-Type)
+        const response = await fetch("http://localhost:7777/api/products", {
+          method: "POST",
+          body: formSubmitData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setIsSuccessOpen(true);
+
+          // เคลียร์ค่าในฟอร์มหลังสร้างเสร็จ
+          setFormData({
+            file: null,
+            itemName: "",
+            slug: "",
+            artist: "",
+            tags: "",
+            description: "",
+            fromArtist: "",
+            category: "",
+            quantity: 1,
+            price: "",
+          });
+        } else {
+          // ถ้าซ้ำ (เช่น slug ซ้ำ) Backend จะพ่น error กลับมา
+          alert(
+            result.message || "เกิดข้อผิดพลาดในการสร้างสินค้า (Slug อาจซ้ำ)",
+          );
+        }
+      } catch (error) {
+        console.error("Error creating product:", error);
+        alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+      }
     } else {
       console.log("Validation Failed:", errors);
     }
@@ -83,7 +162,6 @@ const ArtistDrop = () => {
 
   return (
     <main className="flex-col max-w-4xl mx-auto px-5 md:px-8 relative">
-      {/* ส่วน Header */}
       <div className="mb-12 mt-12">
         <h1 className="text-5xl font-bold text-black font-['Anuphan',sans-serif]">
           Create New Item
@@ -97,7 +175,6 @@ const ArtistDrop = () => {
         Upload File *
       </p>
 
-      {/* 1. เรียกใช้ UploadFiles พร้อมส่ง Props */}
       <UploadFiles
         selectedFile={formData.file}
         onFileChange={handleFileChange}
@@ -106,7 +183,7 @@ const ArtistDrop = () => {
 
       <div className="space-y-8 mt-8"></div>
 
-      {/* 2. เรียกใช้ ItemNames พร้อมส่ง Props */}
+      {/* ส่งข้อมูล formData และ errors ไปให้ ItemNames */}
       <ItemNames
         formData={formData}
         onChange={handleInputChange}
@@ -115,7 +192,6 @@ const ArtistDrop = () => {
 
       <div className="space-y-8 mt-8"></div>
 
-      {/* ส่วนปุ่ม Submit */}
       <div className="flex pt-4 pb-4 pl-10 content-end justify-end">
         <button
           type="button"
@@ -127,16 +203,13 @@ const ArtistDrop = () => {
       </div>
       <div className="space-y-8 mt-8"></div>
 
-      {/* ---------------------------------------------------- */}
-      {/* 3. เรียกใช้ SuccessModal ตรงนี้ */}
       <SuccessModal
         isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)} // สั่งปิดเมื่อกดปุ่ม CLOSE
+        onClose={() => setIsSuccessOpen(false)}
         title="Item Created!"
         message="Your new art has been successfully added to your collection."
         buttonText="GO TO MY COLLECTION"
       />
-      {/* ---------------------------------------------------- */}
     </main>
   );
 };
